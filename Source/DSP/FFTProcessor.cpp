@@ -19,3 +19,9 @@ void FFTProcessor::reset()
     std::fill(outputFifo.begin(), outputFifo.end(), 0.0f);
     isReady = true;
 }
+
+void FFTProcessor::handleHopSizeChange(int overlapOrder)
+{
+    overlap = 1 << overlapOrder;
+    windowCorrection = (1.f / (.33*overlap));
+}

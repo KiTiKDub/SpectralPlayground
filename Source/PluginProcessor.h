@@ -86,7 +86,8 @@ private:
     // std::function<void()> callback;
     KiTiKAsyncUpdater asyncUpdater; 
 
-    int lastOrder{0};
+    int lastOrder{1};
+    int lastHopSize{1};
 
     juce::AudioParameterInt* bitRate{nullptr};
     juce::AudioParameterInt* bitDepth{nullptr};

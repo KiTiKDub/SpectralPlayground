@@ -52,8 +52,10 @@ juce_add_plugin(${PROJECT_NAME}
         COPY_PLUGIN_AFTER_BUILD TRUE
         PLUGIN_MANUFACTURER_CODE 
         PLUGIN_CODE 
-        FORMATS VST3 AU Standalone
-        PRODUCT_NAME "Spectral BitCrusher"        
+        FORMATS VST3 AU LV2 Standalone
+        PRODUCT_NAME "Spectral BitCrusher"  
+        LV2URI https://github.com/KiTiKDub/SpectralPlayground.git
+        LV2_SHARED_LIBRARY_NAME SpectralBitcrusher      
 )
 
 # How we want our SourceFiles to appear in our IDE

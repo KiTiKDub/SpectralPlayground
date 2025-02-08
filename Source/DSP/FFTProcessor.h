@@ -9,13 +9,12 @@
 class FFTProcessor
 {
 public:
-    FFTProcessor(int order, int overlap);
+    FFTProcessor(int order, int overlapOrder);
 
     int getLatencyInSamples() const { return fftSize; }
-
-    juce::dsp::AudioBlock<float> fftBlock();
-
     void reset();
+    void handleHopSizeChange(int overlapOrder);
+
     template <typename FProcess>
     float processSample(float sample, bool bypassed, FProcess process_fn)
     {
@@ -105,7 +104,7 @@ private:
     //This is then multiplied by your overlap factor.
     //The resulting correction will be the inverse of this 1/3*overlap.
     //static constexpr float windowCorrection = 2.0f / 3.0f; //-> need to double check math for different sizes.
-    float windowCorrection;
+    float windowCorrection{1};
     
     juce::dsp::FFT fft;
     juce::dsp::WindowingFunction<float> window;

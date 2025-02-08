@@ -19,6 +19,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     asyncUpdater.setCallback([this] { resetFFTs(); });
     lastOrder = order->get();
+    lastHopSize = overlap->get();
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -173,6 +174,13 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             asyncUpdater.triggerAsyncUpdate();
             lastOrder = order->get();
         }
+    }
+
+    if(lastHopSize != overlap->get())
+    {
+        fftMapLeft.at(lastOrder)->handleHopSizeChange(overlap->get());
+        fftMapRight.at(lastOrder)->handleHopSizeChange(overlap->get());
+        lastHopSize = overlap->get();
     }
 
     auto bitcrush = [this, bitRateValue, bitDepthValue](std::complex<float> *fft_data) 
