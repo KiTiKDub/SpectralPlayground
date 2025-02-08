@@ -3,6 +3,24 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "DSP/FFTProcessor.h"
 
+struct KiTiKAsyncUpdater : public juce::AsyncUpdater
+{
+    KiTiKAsyncUpdater() {};
+
+    void setCallback(std::function<void(void)> callback)
+    {
+        callback_ = std::move(callback);
+    }
+
+    void handleAsyncUpdate() override
+    {
+        callback_();
+    }
+
+private:
+    std::function<void(void)> callback_;
+};
+
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
@@ -45,10 +63,30 @@ public:
 
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts{*this, nullptr, "parameters", createParameterLayout()};
+    void resetFFTs();
 
 private:
 
-    std::optional<std::array<FFTProcessor, 2>> ffts;
+
+    FFTProcessor fft8Left{8, 2};
+    FFTProcessor fft9Left{9, 2};
+    FFTProcessor fft10Left{10, 2};
+    FFTProcessor fft11Left{11, 2};
+    FFTProcessor fft12Left{12, 2};
+
+    FFTProcessor fft8Right{8, 2};
+    FFTProcessor fft9Right{9, 2};
+    FFTProcessor fft10Right{10, 2};
+    FFTProcessor fft11Right{11, 2};
+    FFTProcessor fft12Right{12, 2};
+
+    std::map<int, FFTProcessor*> fftMapLeft{{8, &fft8Left}, {9, &fft9Left}, {10, &fft10Left}, {11, &fft11Left}, {12, &fft12Left}};
+    std::map<int, FFTProcessor *> fftMapRight{{8, &fft8Right}, {9, &fft9Right}, {10, &fft10Right}, {11, &fft11Right}, {12, &fft12Right}};
+
+    // std::function<void()> callback;
+    KiTiKAsyncUpdater asyncUpdater; 
+
+    int lastOrder{0};
 
     juce::AudioParameterInt* bitRate{nullptr};
     juce::AudioParameterInt* bitDepth{nullptr};
@@ -58,3 +96,7 @@ private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
+//To Do:
+    //Crate Async call to reset ffts
+    //Figure out channel processing in fft -> going to add left and right ffts
+    //understand overlap math and add it tofft

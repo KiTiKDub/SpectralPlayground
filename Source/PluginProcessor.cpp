@@ -16,6 +16,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     bitRate = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("bitRate"));
     order = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("order"));
     overlap = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("overlap"));
+
+    asyncUpdater.setCallback([this] { resetFFTs(); });
+    lastOrder = order->get();
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -90,7 +93,10 @@ void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    ffts.emplace(order->get(), overlap->get());
+    for(auto& fft: fftMapLeft)
+    {
+        fft.second->reset();
+    }
 
     juce::ignoreUnused (sampleRate, samplesPerBlock);
 }
@@ -125,6 +131,20 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
   #endif
 }
 
+void AudioPluginAudioProcessor::resetFFTs()
+{
+    for(auto& fft: fftMapLeft)
+    {
+        if(!fft.second->isFFTInUse())
+        fft.second->reset();
+    }
+    for (auto &fft : fftMapRight)
+    {
+        if (!fft.second->isFFTInUse())
+            fft.second->reset();
+    }
+}
+
 void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages)
 {
@@ -140,31 +160,52 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const auto& bitRateValue = bitRate->get();
     const auto& bitDepthValue = bitDepth->get();
 
-    std::array<FFTProcessor, 2>& ffts_ = ffts.value(); //still have to figure out channel stuff
-
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    if(lastOrder != order->get())
     {
-        auto bitcrush = [this, bitRateValue, bitDepthValue, channel, &ffts_](std::complex<float> *fft_data) 
-        {
-            for (int bin = 0; bin < ffts_[channel].numBins; bin++)
-            {
-                auto input = std::abs(fft_data[bin]);
-                auto crusher = pow(2, bitDepthValue);
-                auto crushedData = floor(crusher * input) / crusher;
+        const auto& newFFTLeft = fftMapLeft.at(order->get());
+        const auto& newFFTRight = fftMapRight.at(order->get());
+        if(newFFTLeft->isFFTReady() && newFFTRight->isFFTReady())
+        {   
+            newFFTLeft->setFFTInUse(true);
+            newFFTRight->setFFTInUse(true);
+            fftMapLeft.at(lastOrder)->setFFTReady(false);
+            fftMapRight.at(lastOrder)->setFFTReady(false);
+            asyncUpdater.triggerAsyncUpdate();
+            lastOrder = order->get();
+        }
+    }
 
-                if (bitRateValue > 1)
+    auto bitcrush = [this, bitRateValue, bitDepthValue](std::complex<float> *fft_data) 
+    {
+        for (int bin = 1; bin < 513; bin++) //get bins so they are not hardcoded
+        {
+            float magnitude = std::abs(fft_data[bin]);
+            float phase = std::arg(fft_data[bin]);
+            auto crusher = pow(2, bitDepthValue);
+            double crushedData = floor(crusher * magnitude) / crusher;
+
+            magnitude = static_cast<float>(crushedData);
+
+            if (bitRateValue > 1)
+            {
+                if (bin % bitRateValue != 0)
                 {
-                    if (bin % bitRateValue != 0)
-                    {
-                        auto redux = fft_data[bin - bin % bitRateValue];
-                        fft_data[bin] = redux;
-                        // data[s] = (redux * crusherMix) + (input * (1 - crusherMix));
-                    }
+                    auto redux = std::abs(fft_data[bin - bin % bitRateValue]);
+                    magnitude = redux;
                 }
             }
-        };
+            fft_data[bin] = std::polar(magnitude, phase);
+        }
+    };
 
+    float *dataLeft = buffer.getWritePointer(0);
+    float *dataRight = buffer.getWritePointer(1);
+    for (int i = 0; i < buffer.getNumSamples(); ++i)
+    {
+        dataLeft[i] = fftMapLeft.at(lastOrder)->processSample(dataLeft[i], false, bitcrush); //I need this to be seperate ffts because I need different buffers
+        dataRight[i] = fftMapRight.at(lastOrder)->processSample(dataRight[i], false, bitcrush);
     }
+
 }
 
 //==============================================================================
@@ -175,7 +216,7 @@ bool AudioPluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 {
-    return new AudioPluginAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor (*this);
 }
 
 //==============================================================================
@@ -202,7 +243,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     layout.add(std::make_unique<AudioParameterInt>("bitDepth", "Bit Depth", 1,16,16));
     layout.add(std::make_unique<AudioParameterInt>("bitRate", "Bit Rate", 1, 25, 1));
     layout.add(std::make_unique<AudioParameterInt>("order", "Order", 7, 16, 11));
-    layout.add(std::make_unique<AudioParameterInt>("overlap", "Overlap", 3, 6, 5));
+    layout.add(std::make_unique<AudioParameterInt>("overlap", "Overlap", 3, 5, 3));
     
     return layout;
 }
