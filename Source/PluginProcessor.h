@@ -2,6 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "DSP/FFTProcessor.h"
+#include "Utility/overSampleGain.h"
 
 struct KiTiKAsyncUpdater : public juce::AsyncUpdater
 {
@@ -67,6 +68,7 @@ public:
 
 private:
 
+    overSampleGain osg;
 
     FFTProcessor fft8Left{8, 2};
     FFTProcessor fft9Left{9, 2};
@@ -83,7 +85,6 @@ private:
     std::map<int, FFTProcessor*> fftMapLeft{{8, &fft8Left}, {9, &fft9Left}, {10, &fft10Left}, {11, &fft11Left}, {12, &fft12Left}};
     std::map<int, FFTProcessor *> fftMapRight{{8, &fft8Right}, {9, &fft9Right}, {10, &fft10Right}, {11, &fft11Right}, {12, &fft12Right}};
 
-    // std::function<void()> callback;
     KiTiKAsyncUpdater asyncUpdater; 
 
     int lastOrder{1};
@@ -93,6 +94,9 @@ private:
     juce::AudioParameterInt* bitDepth{nullptr};
     juce::AudioParameterInt* order{nullptr};
     juce::AudioParameterInt* overlap{nullptr};
+    juce::AudioParameterBool* bypass{nullptr};
+    juce::AudioParameterFloat* gain{nullptr};
+    juce::AudioParameterFloat* mix{nullptr};
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)

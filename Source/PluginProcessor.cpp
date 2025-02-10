@@ -16,6 +16,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     bitRate = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("bitRate"));
     order = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("order"));
     overlap = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("overlap"));
+    bypass = dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter("bypass"));
+    gain = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("gain"));
+    mix = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("mix"));
 
     asyncUpdater.setCallback([this] { resetFFTs(); });
     lastOrder = order->get();
@@ -155,6 +158,9 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+    juce::AudioBuffer<float> copyBuffer;
+    copyBuffer.makeCopyOf(buffer);
+
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
@@ -208,10 +214,25 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     float *dataLeft = buffer.getWritePointer(0);
     float *dataRight = buffer.getWritePointer(1);
+    float *copyLeft = copyBuffer.getWritePointer(0);
+    float *copyRight = copyBuffer.getWritePointer(1);
+
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
-        dataLeft[i] = fftMapLeft.at(lastOrder)->processSample(dataLeft[i], false, bitcrush); //I need this to be seperate ffts because I need different buffers
-        dataRight[i] = fftMapRight.at(lastOrder)->processSample(dataRight[i], false, bitcrush);
+        copyLeft[i] = fftMapLeft.at(lastOrder)->processSample(dataLeft[i], false, bitcrush); //I need this to be seperate ffts because I need different buffers
+        copyRight[i] = fftMapRight.at(lastOrder)->processSample(dataRight[i], false, bitcrush);
+    }
+    
+    for (int i = 0; i < buffer.getNumSamples(); ++i) //add mix
+    {
+        dataLeft[i] = copyLeft[i] * mix->get() + dataLeft[i] * (1 - mix->get());
+        dataRight[i] = copyRight[i] * mix->get() + dataRight[i] * (1 - mix->get());
+    }
+
+    auto block = juce::dsp::AudioBlock<float>(buffer); //add gain
+    for(int channel; channel < totalNumOutputChannels; ++channel)
+    {
+        osg.process(block, gain->get(), channel);
     }
 
 }
@@ -252,6 +273,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     layout.add(std::make_unique<AudioParameterInt>("bitRate", "Bit Rate", 1, 25, 1));
     layout.add(std::make_unique<AudioParameterInt>("order", "Order", 7, 16, 11));
     layout.add(std::make_unique<AudioParameterInt>("overlap", "Overlap", 3, 5, 3));
+    layout.add(std::make_unique<AudioParameterBool>("bypass", "Bypass", false));
+    layout.add(std::make_unique<AudioParameterFloat>("gain", "Gain", -24.f, 24.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.f, 1.f, 1.f));
     
     return layout;
 }

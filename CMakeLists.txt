@@ -36,6 +36,8 @@ set(SourceFiles
         Source/Utility/PresetManager.h
         Source/Utility/PresetPanel.cpp
         Source/Utility/PresetPanel.h
+        Source/Utility/overSampleGain.cpp
+        Source/Utility/overSampleGain.h
         Source/DSP/FFTProcessor.cpp
         Source/DSP/FFTProcessor.h
 )
