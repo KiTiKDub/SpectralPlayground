@@ -151,11 +151,23 @@ void Laf::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int heigh
 {
     using namespace juce;
 
-    if (slider.isBar())
+    if (slider.isBar()) //Need to reduce size to add name
     {
-        g.setColour(slider.findColour(Slider::trackColourId));
+        g.setColour(juce::Colour(64u, 194u, 230u));
         g.fillRect(slider.isHorizontal() ? Rectangle<float>(static_cast<float> (x), (float)y + 0.5f, sliderPos - (float)x, (float)height - 1.0f)
             : Rectangle<float>((float)x + 0.5f, sliderPos, (float)width - 1.0f, (float)y + ((float)height - sliderPos)));
+
+        auto r = juce::Rectangle<float>(0,0,width,height);
+        auto valueStr = (juce::String)slider.getValue();
+        auto name = static_cast<juce::String>(slider.getName());
+
+        auto font = g.getCurrentFont();
+        g.setColour(juce::Colours::white);
+
+        g.drawFittedText(valueStr, r.toNearestInt(), juce::Justification::centred, 1);
+        
+
+        drawLinearSliderOutline(g, x, y, width, height, style, slider);
     }
     else
     {
@@ -357,4 +369,10 @@ void Laf::paintToolbarBackground(juce::Graphics& g, int w, int h, juce::Toolbar&
 {
     g.setColour(juce::Colours::black);
     g.fillAll();
+}
+
+void Laf::drawLinearSliderOutline(juce::Graphics &g, int x, int y, int width, int height, const juce::Slider::SliderStyle, juce::Slider &slider)
+{
+    g.setColour(juce::Colour(186u, 34u, 34u));
+    g.drawRect(0, 0, slider.getWidth(), slider.getHeight(), 1);
 }

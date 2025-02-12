@@ -45,29 +45,24 @@ protected:
 template <
     typename Attachment,
     typename APVTS,
-    typename Params,
     typename ParamName,
-    typename SliderType
->
-void makeAttachment(std::unique_ptr<Attachment>& attachment,
-    APVTS& apvts,
-    const Params& params,
-    const ParamName& name,
-    SliderType& slider)
+    typename SliderType>
+void makeAttachment(std::unique_ptr<Attachment> &attachment,
+                    APVTS &apvts,
+                    const ParamName &name,
+                    SliderType &slider)
 {
     attachment = std::make_unique<Attachment>(apvts,
-        params.at(name),
-        slider);
+                                              name,
+                                              slider);
 }
 
 template <
     typename APVTS,
-    typename Params,
-    typename Name
->
-juce::RangedAudioParameter& getParam(APVTS& apvts, Params& params, const Name& name)
+    typename Name>
+juce::RangedAudioParameter &getParam(APVTS &apvts, const Name &name)
 {
-    auto param = apvts.getParameter(params.at(name));
+    auto param = apvts.getParameter(name);
 
     return *param;
 }

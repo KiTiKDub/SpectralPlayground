@@ -230,7 +230,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
 
     auto block = juce::dsp::AudioBlock<float>(buffer); //add gain
-    for(int channel; channel < totalNumOutputChannels; ++channel)
+    for(int channel = 0; channel < totalNumOutputChannels; ++channel)
     {
         osg.process(block, gain->get(), channel);
     }
@@ -245,7 +245,7 @@ bool AudioPluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 {
-    return new juce::GenericAudioProcessorEditor (*this);
+    return new AudioPluginAudioProcessorEditor(*this);
 }
 
 //==============================================================================

@@ -25,6 +25,8 @@ set(SourceFiles
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
+        Source/GUI/Animator.cpp
+        Source/GUI/Animator.h
 	Source/GUI/KitikLevelMeter.h
         Source/GUI/KitikLookAndFeel.cpp
         Source/GUI/KitikLookAndFeel.h
@@ -86,6 +88,7 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC
         Assets
         juce::juce_analytics
+        juce::juce_animation
         juce::juce_audio_basics
         juce::juce_audio_devices
         #juce::juce_audio_formats
