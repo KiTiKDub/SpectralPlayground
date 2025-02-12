@@ -153,19 +153,22 @@ void Laf::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int heigh
 
     if (slider.isBar()) //Need to reduce size to add name
     {
+        float sliderHeight = slider.getHeight();
         g.setColour(juce::Colour(64u, 194u, 230u));
-        g.fillRect(slider.isHorizontal() ? Rectangle<float>(static_cast<float> (x), (float)y + 0.5f, sliderPos - (float)x, (float)height - 1.0f)
+        g.fillRect(slider.isHorizontal() ? Rectangle<float>(static_cast<float> (x) -1.f, (sliderHeight*.4) +.5f, sliderPos - (float)x, (float)(height * .6))
             : Rectangle<float>((float)x + 0.5f, sliderPos, (float)width - 1.0f, (float)y + ((float)height - sliderPos)));
 
-        auto r = juce::Rectangle<float>(0,0,width,height);
-        auto valueStr = (juce::String)slider.getValue();
+        auto valueRect = juce::Rectangle<float>(0,height*.45,width,height*.6);
+        auto nameRect = juce::Rectangle<float>(0, 0, width, height);
+        
+        auto valueStr = slider.textFromValueFunction(slider.getValue());
         auto name = static_cast<juce::String>(slider.getName());
 
         auto font = g.getCurrentFont();
         g.setColour(juce::Colours::white);
-
-        g.drawFittedText(valueStr, r.toNearestInt(), juce::Justification::centred, 1);
-        
+        g.setFont(12);
+        g.drawFittedText(name, nameRect.toNearestInt(), juce::Justification::topLeft, 1);
+        g.drawFittedText(valueStr, valueRect.toNearestInt(), juce::Justification::centred, 1);
 
         drawLinearSliderOutline(g, x, y, width, height, style, slider);
     }
@@ -373,6 +376,9 @@ void Laf::paintToolbarBackground(juce::Graphics& g, int w, int h, juce::Toolbar&
 
 void Laf::drawLinearSliderOutline(juce::Graphics &g, int x, int y, int width, int height, const juce::Slider::SliderStyle, juce::Slider &slider)
 {
+    float heightReduce = static_cast<float>(slider.getHeight()) * .6;
+    float heightShift = static_cast<float>(slider.getHeight()) * .4;
     g.setColour(juce::Colour(186u, 34u, 34u));
-    g.drawRect(0, 0, slider.getWidth(), slider.getHeight(), 1);
+    g.drawRect(.5f, heightShift, static_cast<float>(width), heightReduce, 1.f);
+    // g.drawRect(0, 0, slider.getWidth(), slider.getHeight(), 1);
 }

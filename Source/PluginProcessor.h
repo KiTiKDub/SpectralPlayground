@@ -91,7 +91,6 @@ private:
     int lastHopSize{1};
 
     juce::AudioParameterInt* bitRate{nullptr};
-    juce::AudioParameterInt* bitDepth{nullptr};
     juce::AudioParameterInt* order{nullptr};
     juce::AudioParameterInt* overlap{nullptr};
     juce::AudioParameterBool* bypass{nullptr};
@@ -102,6 +101,7 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
 //To Do:
-    //Crate Async call to reset ffts
-    //Figure out channel processing in fft -> going to add left and right ffts
-    //understand overlap math and add it tofft
+    //Fix overlap gain correction- > keeping at 2/3 as that seems to work well enough
+    //Make bypass work, set up latency
+        //fix the get latency in samples to return the fft size
+        //add latency in prep to play, then add to async function

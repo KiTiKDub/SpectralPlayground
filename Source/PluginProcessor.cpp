@@ -12,7 +12,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                      #endif
                        )
 {
-    bitDepth = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("bitDepth"));
     bitRate = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("bitRate"));
     order = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("order"));
     overlap = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("overlap"));
@@ -165,7 +164,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         buffer.clear (i, 0, buffer.getNumSamples());
     
     const auto& bitRateValue = bitRate->get();
-    const auto& bitDepthValue = bitDepth->get();
 
     if(lastOrder != order->get())
     {
@@ -175,8 +173,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         {   
             newFFTLeft->setFFTInUse(true);
             newFFTRight->setFFTInUse(true);
-            fftMapLeft.at(lastOrder)->setFFTReady(false);
-            fftMapRight.at(lastOrder)->setFFTReady(false);
+            fftMapLeft.at(lastOrder)->prepFFTForReset();
+            fftMapRight.at(lastOrder)->prepFFTForReset();
             asyncUpdater.triggerAsyncUpdate();
             lastOrder = order->get();
         }
@@ -189,13 +187,14 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         lastHopSize = overlap->get();
     }
 
-    auto bitcrush = [this, bitRateValue, bitDepthValue](std::complex<float> *fft_data) 
+    auto bitcrush = [this, bitRateValue](std::complex<float> *fft_data) 
     {
-        for (int bin = 1; bin < 513; bin++) //get bins so they are not hardcoded
+        auto numBins = (1 << lastOrder) / 2 + 1;
+        for (int bin = 1; bin < numBins; bin++) 
         {
             float magnitude = std::abs(fft_data[bin]);
             float phase = std::arg(fft_data[bin]);
-            auto crusher = pow(2, bitDepthValue);
+            auto crusher = pow(2, 16);
             double crushedData = floor(crusher * magnitude) / crusher;
 
             magnitude = static_cast<float>(crushedData);
@@ -245,7 +244,8 @@ bool AudioPluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 {
-    return new AudioPluginAudioProcessorEditor(*this);
+    // return new AudioPluginAudioProcessorEditor(*this);
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -268,14 +268,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 {
     using namespace juce;
     AudioProcessorValueTreeState::ParameterLayout layout;
+    auto mixRange = NormalisableRange<float>(0.f, 1.f, .01f);
+    auto mixAttributes = AudioParameterFloatAttributes().withStringFromValueFunction([](auto x, auto) { return juce::String(x*100) + "%";});
+    auto orderAttributes = AudioParameterIntAttributes().withStringFromValueFunction([](int x, auto)
+                                                                                           { return juce::String(1 << x); });
 
-    layout.add(std::make_unique<AudioParameterInt>("bitDepth", "Bit Depth", 1,16,16));
     layout.add(std::make_unique<AudioParameterInt>("bitRate", "Bit Rate", 1, 25, 1));
-    layout.add(std::make_unique<AudioParameterInt>("order", "Order", 7, 16, 11));
-    layout.add(std::make_unique<AudioParameterInt>("overlap", "Overlap", 3, 5, 3));
+    layout.add(std::make_unique<AudioParameterInt>("order", "Order", 8, 12, 10, orderAttributes));
+    layout.add(std::make_unique<AudioParameterInt>("overlap", "Overlap", 2, 5, 2, orderAttributes));
     layout.add(std::make_unique<AudioParameterBool>("bypass", "Bypass", false));
     layout.add(std::make_unique<AudioParameterFloat>("gain", "Gain", -24.f, 24.f, 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.f, 1.f, 1.f));
+    layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", mixRange, 1.f, mixAttributes));
     
     return layout;
 }

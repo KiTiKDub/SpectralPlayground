@@ -3,13 +3,13 @@
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p)
+    : AudioProcessorEditor (&p), processorRef (p), bypassAttachment(p.apvts, "bypass", bypass)
 {
     updateRSWL(p.apvts);
     setLookAndFeel(&lnf);
 
     bypass.setComponentID("Power");
-    showAnimator.setName("Settings");
+    showAnimator.setButtonText("Settings");
     showAnimator.onClick = [this]()
     {
         if(showAnimator.getToggleState())
@@ -54,10 +54,10 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
     auto bypassBounds = bounds;
-    bypassBounds.removeFromBottom(bounds.getHeight() * .9);
-    bypassBounds.removeFromRight(bounds.getWidth() * .9);
-    auto animatorButtonBounds = bounds.removeFromTop(bounds.getHeight() *.1);
-    animatorButtonBounds.translate(0, 50);
+    bypassBounds.removeFromBottom(bounds.getHeight() * .925);
+    bypassBounds.removeFromRight(bounds.getWidth() * .925);
+    auto animatorButtonBounds = bounds.removeFromTop(bounds.getHeight() *.075);
+    animatorButtonBounds.removeFromLeft(animatorButtonBounds.getWidth() * .85);
     bounds.removeFromBottom(bounds.getHeight() * .1);
     auto bitDepthBounds = bounds;
     bitDepth->setBounds(bitDepthBounds);

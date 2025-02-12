@@ -1,13 +1,13 @@
 
 #pragma once
 #include <juce_animation/juce_animation.h>
-#include "GUI/SliderWithLabels.h"
+#include <juce_audio_processors/juce_audio_processors.h>
 
 class AnimationView : public juce::Component
 {
 public:
     AnimationView(juce::ValueAnimatorBuilder::EasingFn easingFunctionFactoryIn, juce::AudioProcessorValueTreeState& apvts) // when built, this will be juce::Easings::CreateEase()
-        : easingFunctionFactory(std::move(easingFunctionFactoryIn))
+        : easingFunctionFactory(std::move(easingFunctionFactoryIn)), orderAT(apvts, "order", order), overlapAT(apvts, "overlap", overlap), gainAT(apvts, "gain", gain), mixAT(apvts, "mix", mix)
     {
         jassert(easingFunctionFactory != nullptr);
         addAndMakeVisible(order);
@@ -16,11 +16,9 @@ public:
         addAndMakeVisible(mix);
 
         order.setName("Window Size");
-        overlap.setName("Winwow Overlap");
+        overlap.setName("Window Overlap");
         gain.setName("Gain");
         mix.setName("Mix");
-
-        // this->setInterceptsMouseClicks(false, false);
     }
 
     void animateIn()
@@ -31,7 +29,7 @@ public:
         };
 
         const auto animateIn = juce::ValueAnimatorBuilder{}.withEasing(easingFunctionFactory)
-                                                           .withDurationMs(500)
+                                                           .withDurationMs(350)
                                                            .withValueChangedCallback(valueChangedCallback);
 
         const auto animateOut = animateIn.withValueChangedCallback([=](auto v)
@@ -81,8 +79,6 @@ public:
         g.setColour(juce::Colours::black);
         g.fillAll();
         g.setColour(juce::Colours::white);
-        g.drawRect(getLocalBounds(), 1);
-        // g.drawFittedText("This is my animator", getLocalBounds(), juce::Justification::centred, 1);
     }
 
     void resized() override 
@@ -93,10 +89,10 @@ public:
         auto bottomLeft = bounds.removeFromLeft(bounds.getWidth() * .5);
         auto bottomRight = bounds;
         
-        topLeft.reduce(20, 15);
-        topRight.reduce(20, 15);
-        bottomLeft.reduce(20, 15);
-        bottomRight.reduce(20, 15);
+        topLeft.reduce(20, 10);
+        topRight.reduce(20, 10);
+        bottomLeft.reduce(20, 10);
+        bottomRight.reduce(20, 10);
 
         order.setBounds(topLeft);
         overlap.setBounds(topRight);
@@ -105,7 +101,6 @@ public:
     }
 
 private:
-    void updateSWL(juce::AudioProcessorValueTreeState &apvts);
 
     juce::ValueAnimatorBuilder::EasingFn easingFunctionFactory{};
     std::unique_ptr<juce::Animator> animator;
@@ -116,5 +111,5 @@ private:
                  gain{juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox},
                  mix{juce::Slider::SliderStyle::LinearBar, juce::Slider::TextEntryBoxPosition::NoTextBox}; 
 
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> orderAT, overlapAT, gainAT, mixAT;
+    juce::AudioProcessorValueTreeState::SliderAttachment orderAT, overlapAT, gainAT, mixAT;
 };

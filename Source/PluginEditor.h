@@ -24,14 +24,14 @@ private:
 
     AudioPluginAudioProcessor& processorRef;
 
-    AnimationView animator{ juce::Easings::createEaseIn(), processorRef.apvts };
+    AnimationView animator{ juce::Easings::createEaseOut(), processorRef.apvts };
 
     Laf lnf;
     juce::ToggleButton bypass, showAnimator;
     std::unique_ptr<RotarySliderWithLabels> bitDepth;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> bitDepthAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
+    juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)

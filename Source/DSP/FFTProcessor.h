@@ -91,7 +91,7 @@ public:
     }
 
     bool isFFTReady() { return isReady;}
-    void setFFTReady(bool ready) { isReady = ready;}
+    void prepFFTForReset() { isReady = false; inUse = false;}
     bool isFFTInUse() { return inUse;}
     void setFFTInUse(bool use) { inUse = use;}
 
