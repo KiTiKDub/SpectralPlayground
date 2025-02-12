@@ -90,7 +90,7 @@ private:
     int lastOrder{1};
     int lastHopSize{1};
 
-    juce::AudioParameterInt* bitRate{nullptr};
+    juce::AudioParameterInt* crush{nullptr};
     juce::AudioParameterInt* order{nullptr};
     juce::AudioParameterInt* overlap{nullptr};
     juce::AudioParameterBool* bypass{nullptr};

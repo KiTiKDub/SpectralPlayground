@@ -26,11 +26,15 @@ private:
 
     AnimationView animator{ juce::Easings::createEaseOut(), processorRef.apvts };
 
+    juce::URL url{"https://kwhaley5.gumroad.com/"};
+
+    juce::HyperlinkButton gumroad{"More Plugins", url};
+
     Laf lnf;
     juce::ToggleButton bypass, showAnimator;
-    std::unique_ptr<RotarySliderWithLabels> bitDepth;
+    std::unique_ptr<RotarySliderWithLabels> crush;
 
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> bitDepthAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> bitRateAT;
     juce::AudioProcessorValueTreeState::ButtonAttachment bypassAttachment;
 
 

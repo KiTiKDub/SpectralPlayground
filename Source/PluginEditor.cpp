@@ -19,9 +19,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     };
 
     addAndMakeVisible(bypass);
+    addAndMakeVisible(gumroad);
     addAndMakeVisible(showAnimator);
+    addAndMakeVisible(*crush);
     addAndMakeVisible(animator);
-    addAndMakeVisible(*bitDepth, 0);
     
     setSize (500, 500);
 
@@ -42,11 +43,12 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillAll(juce::Colours::black);
 
     auto logo = juce::ImageCache::getFromMemory(BinaryData::KITIK_LOGO_NO_BKGD_png, BinaryData::KITIK_LOGO_NO_BKGD_pngSize);
-    //g.drawImage(logo, getLocalBounds().toFloat(), juce::RectanglePlacement::centred);
+    auto logoSpace = getLocalBounds().removeFromTop(getLocalBounds().getHeight() * .1);
+    g.drawImage(logo, logoSpace.toFloat(), juce::RectanglePlacement::centred);
 
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("KiTiK Plugin Template", getLocalBounds(), juce::Justification::centredTop, 1);
+    //g.drawFittedText ("KiTiK Plugin Template", getLocalBounds(), juce::Justification::centredTop, 1);
 
 }
 
@@ -60,25 +62,30 @@ void AudioPluginAudioProcessorEditor::resized()
     animatorButtonBounds.removeFromLeft(animatorButtonBounds.getWidth() * .85);
     bounds.removeFromBottom(bounds.getHeight() * .1);
     auto bitDepthBounds = bounds;
-    bitDepth->setBounds(bitDepthBounds);
+    crush->setBounds(bitDepthBounds);
     showAnimator.setBounds(animatorButtonBounds);
     bypass.setBounds(bypassBounds);
     animator.setTopLeftPosition(0, getLocalBounds().getHeight());
     animator.setSize(bounds.getWidth(), 100);
+
+    auto morePlugins = getLocalBounds();
+    morePlugins.removeFromTop(morePlugins.getHeight() * .95);
+    morePlugins.removeFromRight(morePlugins.getWidth() * .8);
+    gumroad.setBounds(morePlugins);
 }   
 
 void AudioPluginAudioProcessorEditor::updateRSWL(juce::AudioProcessorValueTreeState& apvts)
 {
-    auto& bitDepthParam = getParam(apvts, "bitDepth");
+    auto& bitRateParam = getParam(apvts, "crush");
 
-    bitDepth = std::make_unique<RotarySliderWithLabels>(&bitDepthParam, "", "Bit Depth");
+    crush = std::make_unique<RotarySliderWithLabels>(&bitRateParam, "", "Crush");
 
-    makeAttachment(bitDepthAttachment, apvts, "bitDepth", *bitDepth);
+    makeAttachment(bitRateAT, apvts, "crush", *crush);
 
-    addLabelPairs(bitDepth->labels, 1, 3, bitDepthParam, "", 20);
+    addLabelPairs(crush->labels, 1, 3, bitRateParam, "", 20);
 
-    bitDepth->onValueChange = [this, &bitDepthParam]()
+    crush->onValueChange = [this, &bitRateParam]()
     {
-        addLabelPairs(bitDepth->labels, 1, 3, bitDepthParam, "", 20);
+        addLabelPairs(crush->labels, 1, 3, bitRateParam, "", 20);
     };
 }

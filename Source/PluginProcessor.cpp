@@ -12,7 +12,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                      #endif
                        )
 {
-    bitRate = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("bitRate"));
+    crush = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("crush"));
     order = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("order"));
     overlap = dynamic_cast<juce::AudioParameterInt*>(apvts.getParameter("overlap"));
     bypass = dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter("bypass"));
@@ -100,6 +100,12 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     {
         fft.second->reset();
     }
+    for (auto &fft : fftMapRight)
+    {
+        fft.second->reset();
+    }
+
+    setLatencySamples(fftMapLeft.at(order->get())->getLatencyInSamples());
 
     juce::ignoreUnused (sampleRate, samplesPerBlock);
 }
@@ -146,6 +152,8 @@ void AudioPluginAudioProcessor::resetFFTs()
         if (!fft.second->isFFTInUse())
             fft.second->reset();
     }
+
+    setLatencySamples(fftMapLeft.at(order->get())->getLatencyInSamples());
 }
 
 void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
@@ -163,7 +171,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
-    const auto& bitRateValue = bitRate->get();
+    const auto& bitRateValue = crush->get();
 
     if(lastOrder != order->get())
     {
@@ -222,18 +230,20 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         copyRight[i] = fftMapRight.at(lastOrder)->processSample(dataRight[i], false, bitcrush);
     }
     
-    for (int i = 0; i < buffer.getNumSamples(); ++i) //add mix
+    if(!bypass->get())
     {
-        dataLeft[i] = copyLeft[i] * mix->get() + dataLeft[i] * (1 - mix->get());
-        dataRight[i] = copyRight[i] * mix->get() + dataRight[i] * (1 - mix->get());
-    }
+        for (int i = 0; i < buffer.getNumSamples(); ++i) //add mix
+        {
+            dataLeft[i] = copyLeft[i] * mix->get() + dataLeft[i] * (1 - mix->get());
+            dataRight[i] = copyRight[i] * mix->get() + dataRight[i] * (1 - mix->get());
+        }
 
-    auto block = juce::dsp::AudioBlock<float>(buffer); //add gain
-    for(int channel = 0; channel < totalNumOutputChannels; ++channel)
-    {
-        osg.process(block, gain->get(), channel);
+        auto block = juce::dsp::AudioBlock<float>(buffer); //add gain
+        for(int channel = 0; channel < totalNumOutputChannels; ++channel)
+        {
+            osg.process(block, gain->get(), channel);
+        }
     }
-
 }
 
 //==============================================================================
@@ -244,8 +254,8 @@ bool AudioPluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 {
-    // return new AudioPluginAudioProcessorEditor(*this);
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new AudioPluginAudioProcessorEditor(*this);
+    // return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -273,7 +283,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     auto orderAttributes = AudioParameterIntAttributes().withStringFromValueFunction([](int x, auto)
                                                                                            { return juce::String(1 << x); });
 
-    layout.add(std::make_unique<AudioParameterInt>("bitRate", "Bit Rate", 1, 25, 1));
+    layout.add(std::make_unique<AudioParameterInt>("crush", "Crush", 1, 25, 1));
     layout.add(std::make_unique<AudioParameterInt>("order", "Order", 8, 12, 10, orderAttributes));
     layout.add(std::make_unique<AudioParameterInt>("overlap", "Overlap", 2, 5, 2, orderAttributes));
     layout.add(std::make_unique<AudioParameterBool>("bypass", "Bypass", false));
