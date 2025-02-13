@@ -56,7 +56,7 @@ juce_add_plugin(${PROJECT_NAME}
         PLUGIN_MANUFACTURER_CODE 
         PLUGIN_CODE 
         FORMATS VST3 AU LV2 Standalone
-        PRODUCT_NAME "Spectral BitCrusher"  
+        PRODUCT_NAME "Krush"  
         LV2URI https://github.com/KiTiKDub/SpectralPlayground.git
         LV2_SHARED_LIBRARY_NAME SpectralBitcrusher      
 )
@@ -89,11 +89,11 @@ target_link_libraries(${PROJECT_NAME}
         #juce::juce_analytics
         juce::juce_animation
         juce::juce_audio_basics
-        #juce::juce_audio_devices
+        juce::juce_audio_devices
         #juce::juce_audio_formats
         juce::juce_audio_plugin_client
         juce::juce_audio_processors
-        #juce::juce_audio_utils
+        juce::juce_audio_utils
         juce::juce_core
         #juce::juce_data_structures
         juce::juce_dsp

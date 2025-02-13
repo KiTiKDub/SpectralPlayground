@@ -224,6 +224,12 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     float *copyLeft = copyBuffer.getWritePointer(0);
     float *copyRight = copyBuffer.getWritePointer(1);
 
+    if(totalNumInputChannels == 1)
+    {
+        dataRight = buffer.getWritePointer(0);
+        copyRight = buffer.getWritePointer(0);
+    }
+
     for (int i = 0; i < buffer.getNumSamples(); ++i)
     {
         copyLeft[i] = fftMapLeft.at(lastOrder)->processSample(dataLeft[i], false, bitcrush); //I need this to be seperate ffts because I need different buffers
@@ -283,12 +289,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     auto orderAttributes = AudioParameterIntAttributes().withStringFromValueFunction([](int x, auto)
                                                                                            { return juce::String(1 << x); });
 
-    layout.add(std::make_unique<AudioParameterInt>("crush", "Crush", 1, 25, 1));
-    layout.add(std::make_unique<AudioParameterInt>("order", "Order", 8, 12, 10, orderAttributes));
-    layout.add(std::make_unique<AudioParameterInt>("overlap", "Overlap", 2, 5, 2, orderAttributes));
-    layout.add(std::make_unique<AudioParameterBool>("bypass", "Bypass", false));
-    layout.add(std::make_unique<AudioParameterFloat>("gain", "Gain", -24.f, 24.f, 0.f));
-    layout.add(std::make_unique<AudioParameterFloat>("mix", "Mix", mixRange, 1.f, mixAttributes));
+    layout.add(std::make_unique<AudioParameterInt>(juce::ParameterID{"crush",1}, "Crush", 1, 25, 1));
+    layout.add(std::make_unique<AudioParameterInt>(juce::ParameterID{"order",1}, "Order", 8, 12, 10, orderAttributes));
+    layout.add(std::make_unique<AudioParameterInt>(juce::ParameterID{"overlap",1}, "Overlap", 2, 5, 2, orderAttributes));
+    layout.add(std::make_unique<AudioParameterBool>(juce::ParameterID{"bypass",1}, "Bypass", false));
+    layout.add(std::make_unique<AudioParameterFloat>(juce::ParameterID{"gain",1}, "Gain", -24.f, 24.f, 0.f));
+    layout.add(std::make_unique<AudioParameterFloat>(juce::ParameterID{"mix",1}, "Mix", mixRange, 1.f, mixAttributes));
     
     return layout;
 }
