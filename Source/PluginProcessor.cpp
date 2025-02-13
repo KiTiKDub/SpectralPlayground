@@ -188,7 +188,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         }
     }
 
-    if(lastHopSize != overlap->get())
+    if(lastHopSize != overlap->get()) //Needs to be checked when fft changes as well, fix in update
     {
         fftMapLeft.at(lastOrder)->handleHopSizeChange(overlap->get());
         fftMapRight.at(lastOrder)->handleHopSizeChange(overlap->get());

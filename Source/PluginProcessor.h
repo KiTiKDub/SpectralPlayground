@@ -3,24 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "DSP/FFTProcessor.h"
 #include "Utility/overSampleGain.h"
-
-struct KiTiKAsyncUpdater : public juce::AsyncUpdater
-{
-    KiTiKAsyncUpdater() {};
-
-    void setCallback(std::function<void(void)> callback)
-    {
-        callback_ = std::move(callback);
-    }
-
-    void handleAsyncUpdate() override
-    {
-        callback_();
-    }
-
-private:
-    std::function<void(void)> callback_;
-};
+#include "Utility/KiTiKAsyncUpdater.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor

@@ -1,44 +1,51 @@
 #pragma once
 #include "juce_dsp/juce_dsp.h"
 
-/**
-  STFT analysis and resynthesis of audio data.
-
+/*
   Each channel should have its own FFTProcessor.
  */
 class FFTProcessor
 {
 public:
-    FFTProcessor(int order, int overlapOrder);
+    FFTProcessor::FFTProcessor(int order, int overlapOrder) 
+        : fft(order), fftSize(1 << order), overlap(1 << overlapOrder),
+            hopSize(fftSize / overlap),
+            window(fftSize + 1, juce::dsp::WindowingFunction<float>::WindowingMethod::hann, false),
+            inputFifo(fftSize), outputFifo(fftSize), fftData(fftSize * 2)
+    {
+        fftOrder = order;
+        numBins = fftSize / 2 + 1;
+        windowCorrection = (1.f / (.375f * overlap));
+    }
 
-    int getLatencyInSamples() const { return fftSize; }
-    void reset();
-    void handleHopSizeChange(int overlapOrder);
+    void FFTProcessor::reset()
+    {
+        count = 0;
+        pos = 0;
+
+        std::fill(inputFifo.begin(), inputFifo.end(), 0.0f);
+        std::fill(outputFifo.begin(), outputFifo.end(), 0.0f);
+        isReady = true;
+        inUse = false;
+    }
+
+    void FFTProcessor::handleHopSizeChange(int overlapOrder)
+    {
+        overlap = 1 << overlapOrder;
+        windowCorrection = /* (1.f / (.5*overlap)) */ 2.f / 3.f;
+    }
 
     template <typename FProcess>
     float processSample(float sample, bool bypassed, FProcess process_fn)
     {
-        // Push the new sample value into the input FIFO.
         inputFifo[pos] = sample;
-
-        // Read the output value from the output FIFO. Since it takes fftSize
-        // timesteps before actual samples are read from this FIFO instead of
-        // the initial zeros, the sound output is delayed by fftSize samples,
-        // which we will report as our latency.
         float outputSample = outputFifo[pos];
-
-        // Once we've read the sample, set this position in the FIFO back to
-        // zero so we can add the IFFT results to it later.
         outputFifo[pos] = 0.0f;
 
-        // Advance the FIFO index and wrap around if necessary.
         pos += 1;
         if (pos == fftSize)
-        {
             pos = 0;
-        }
 
-        // Process the FFT frame once we've collected hopSize samples.
         count += 1;
         if (count == hopSize)
         {
@@ -53,28 +60,24 @@ public:
                 std::memcpy(fftPtr + fftSize - pos, inputPtr, pos * sizeof(float));
             }
 
-            // Apply the window to avoid spectral leakage.
             window.multiplyWithWindowingTable(fftPtr, fftSize);
 
             if (!bypassed)
             {
-                // Perform the forward FFT.
                 fft.performRealOnlyForwardTransform(fftPtr, true);
-                // Do stuff with the FFT data.
                 process_fn(reinterpret_cast<std::complex<float> *>(fftPtr));
-
-                // Perform the inverse FFT.
                 fft.performRealOnlyInverseTransform(fftPtr);
             }
 
-            // Apply the window again for resynthesis.
             window.multiplyWithWindowingTable(fftPtr, fftSize);
 
             // Scale down the output samples because of the overlapping windows.
-            for (int i = 0; i < fftSize; ++i)
-            {
-                fftPtr[i] *= windowCorrection;
-            }
+            // for (int i = 0; i < fftSize; ++i)
+            // {
+            //     fftPtr[i] *= windowCorrection;
+            // }
+
+            juce::FloatVectorOperations::multiply(fftPtr, windowCorrection, fftSize);
 
             // Add the IFFT results to the output FIFO.
             for (int i = 0; i < pos; ++i)
@@ -89,7 +92,8 @@ public:
 
         return outputSample;
     }
-
+    
+    int getLatencyInSamples() const { return fftSize; }
     bool isFFTReady() { return isReady;}
     void prepFFTForReset() { isReady = false; inUse = false;}
     bool isFFTInUse() { return inUse;}
@@ -97,33 +101,19 @@ public:
 
 private:
 
+    bool isReady = true;
+    bool inUse = false;
     int fftOrder, fftSize, overlap, hopSize, numBins;
-    
-    // Gain correction for using Hann window with 75% overlap.
-    //a squared hann window has amplitude effect of 1/3.
-    //This is then multiplied by your overlap factor.
-    //The resulting correction will be the inverse of this 1/3*overlap.
-    //static constexpr float windowCorrection = 2.0f / 3.0f; //-> need to double check math for different sizes.
+    int count = 0;
+    int pos = 0;
     float windowCorrection{1};
     
     juce::dsp::FFT fft;
     juce::dsp::WindowingFunction<float> window;
     
-    // Counts up until the next hop.
-    int count = 0;
-    
-    // Write position in input FIFO and read position in output FIFO.
-    int pos = 0;
-    
-    // Circular buffers for incoming and outgoing audio data.
     std::vector<float> inputFifo;
     std::vector<float> outputFifo;
-    
-    // The FFT working space. Contains interleaved complex numbers.
     std::vector<float> fftData; 
-    
-    bool isReady = true;
-    bool inUse = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FFTProcessor)
 };

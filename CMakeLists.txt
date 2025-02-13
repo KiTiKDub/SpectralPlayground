@@ -25,22 +25,21 @@ set(SourceFiles
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
-        Source/GUI/Animator.cpp
         Source/GUI/Animator.h
-	Source/GUI/KitikLevelMeter.h
+	# Source/GUI/KitikLevelMeter.h
         Source/GUI/KitikLookAndFeel.cpp
         Source/GUI/KitikLookAndFeel.h
         Source/GUI/RotarySliderWithLabels.cpp
         Source/GUI/RotarySliderWithLabels.h
-        Source/GUI/SliderWithLabels.cpp
-        Source/GUI/SliderWithLabels.h
-        Source/Utility/PresetManager.cpp
-        Source/Utility/PresetManager.h
-        Source/Utility/PresetPanel.cpp
-        Source/Utility/PresetPanel.h
+        # Source/GUI/SliderWithLabels.cpp
+        # Source/GUI/SliderWithLabels.h
+        # Source/Utility/PresetManager.cpp
+        # Source/Utility/PresetManager.h
+        # Source/Utility/PresetPanel.cpp
+        # Source/Utility/PresetPanel.h
         Source/Utility/overSampleGain.cpp
         Source/Utility/overSampleGain.h
-        Source/DSP/FFTProcessor.cpp
+        Source/Utility/KiTiKAsyncUpdater.h
         Source/DSP/FFTProcessor.h
 )
 
@@ -87,21 +86,21 @@ target_compile_definitions(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME}
         PUBLIC
         Assets
-        juce::juce_analytics
+        #juce::juce_analytics
         juce::juce_animation
         juce::juce_audio_basics
-        juce::juce_audio_devices
+        #juce::juce_audio_devices
         #juce::juce_audio_formats
         juce::juce_audio_plugin_client
         juce::juce_audio_processors
-        juce::juce_audio_utils
+        #juce::juce_audio_utils
         juce::juce_core
-        juce::juce_data_structures
+        #juce::juce_data_structures
         juce::juce_dsp
-        juce::juce_events
+        #juce::juce_events
         juce::juce_graphics
         juce::juce_gui_basics
-        juce::juce_gui_extra
+        #juce::juce_gui_extra
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
