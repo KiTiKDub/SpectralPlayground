@@ -7,7 +7,7 @@
 class FFTProcessor
 {
 public:
-    FFTProcessor::FFTProcessor(int order, int overlapOrder) 
+    FFTProcessor(int order, int overlapOrder) 
         : fft(order), fftSize(1 << order), overlap(1 << overlapOrder),
             hopSize(fftSize / overlap),
             window(fftSize + 1, juce::dsp::WindowingFunction<float>::WindowingMethod::hann, false),
@@ -18,7 +18,7 @@ public:
         windowCorrection = (1.f / (.375f * overlap));
     }
 
-    void FFTProcessor::reset()
+    void reset()
     {
         count = 0;
         pos = 0;
@@ -29,7 +29,7 @@ public:
         inUse = false;
     }
 
-    void FFTProcessor::handleHopSizeChange(int overlapOrder)
+    void handleHopSizeChange(int overlapOrder)
     {
         overlap = 1 << overlapOrder;
         windowCorrection = /* (1.f / (.5*overlap)) */ 2.f / 3.f;
