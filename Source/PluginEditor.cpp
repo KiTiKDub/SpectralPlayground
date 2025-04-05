@@ -77,14 +77,14 @@ void AudioPluginAudioProcessorEditor::updateRSWL(juce::AudioProcessorValueTreeSt
 {
     auto& bitRateParam = getParam(apvts, "crush");
 
-    crush = std::make_unique<RotarySliderWithLabels>(&bitRateParam, "", "Crush");
+    crush = std::make_unique<RotarySliderWithLabels>(&bitRateParam, "", "Krush");
 
     makeAttachment(bitRateAT, apvts, "crush", *crush);
 
-    addLabelPairs(crush->labels, 1, 3, bitRateParam, "", 20);
+    addLabelPairs(crush->labels, 1, 3, bitRateParam, "", 36, 20);
 
     crush->onValueChange = [this, &bitRateParam]()
     {
-        addLabelPairs(crush->labels, 1, 3, bitRateParam, "", 20);
+        addLabelPairs(crush->labels, 1, 3, bitRateParam, "", 36, 20);
     };
 }

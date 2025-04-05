@@ -74,11 +74,9 @@ template <
     typename ParamType,
     typename SuffixType
 >
-void addLabelPairs(Labels& labels, const int posOne, const int posTwo, const ParamType& param, const SuffixType& suffix, const int fontSize = 14, std::vector<juce::String> array = std::vector<juce::String>())
+void addLabelPairs(Labels& labels, const int posOne, const int posTwo, const ParamType& param, const SuffixType& suffix, const int fontSizeTop = 14, const int fontSizeBottom = 14, std::vector<juce::String> array = std::vector<juce::String>())
 {
     labels.clear();
-    labels.add({ posOne, getValString(param, true, suffix, array), fontSize });
-    labels.add({ posTwo, getValString(param, false, suffix, array), fontSize });
+    labels.add({ posOne, getValString(param, true, suffix, array), fontSizeTop });
+    labels.add({ posTwo, getValString(param, false, suffix, array), fontSizeBottom });
 }
-
-

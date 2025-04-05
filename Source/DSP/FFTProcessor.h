@@ -32,7 +32,7 @@ public:
     void handleHopSizeChange(int overlapOrder)
     {
         overlap = 1 << overlapOrder;
-        windowCorrection = /* (1.f / (.5*overlap)) */ 2.f / 3.f;
+        windowCorrection = 2.f / 3.f;
     }
 
     template <typename FProcess>
@@ -70,12 +70,6 @@ public:
             }
 
             window.multiplyWithWindowingTable(fftPtr, fftSize);
-
-            // Scale down the output samples because of the overlapping windows.
-            // for (int i = 0; i < fftSize; ++i)
-            // {
-            //     fftPtr[i] *= windowCorrection;
-            // }
 
             juce::FloatVectorOperations::multiply(fftPtr, windowCorrection, fftSize);
 

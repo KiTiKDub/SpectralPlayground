@@ -183,6 +183,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             newFFTRight->setFFTInUse(true);
             fftMapLeft.at(lastOrder)->prepFFTForReset();
             fftMapRight.at(lastOrder)->prepFFTForReset();
+            newFFTLeft->handleHopSizeChange(overlap->get());
+            newFFTRight->handleHopSizeChange(overlap->get());
             asyncUpdater.triggerAsyncUpdate();
             lastOrder = order->get();
         }
@@ -267,17 +269,16 @@ juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 //==============================================================================
 void AudioPluginAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-    juce::ignoreUnused (destData);
+    juce::MemoryOutputStream mos(destData, true);
+    apvts.state.writeToStream(mos);
 }
 
 void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-    juce::ignoreUnused (data, sizeInBytes);
+    auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
+    if (tree.isValid()) {
+        apvts.replaceState(tree);
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
@@ -289,7 +290,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     auto orderAttributes = AudioParameterIntAttributes().withStringFromValueFunction([](int x, auto)
                                                                                            { return juce::String(1 << x); });
 
-    layout.add(std::make_unique<AudioParameterInt>(juce::ParameterID{"crush",1}, "Crush", 1, 25, 1));
+    layout.add(std::make_unique<AudioParameterInt>(juce::ParameterID{"crush",1}, "Krush", 1, 25, 1));
     layout.add(std::make_unique<AudioParameterInt>(juce::ParameterID{"order",1}, "Order", 8, 12, 10, orderAttributes));
     layout.add(std::make_unique<AudioParameterInt>(juce::ParameterID{"overlap",1}, "Overlap", 2, 5, 2, orderAttributes));
     layout.add(std::make_unique<AudioParameterBool>(juce::ParameterID{"bypass",1}, "Bypass", false));
